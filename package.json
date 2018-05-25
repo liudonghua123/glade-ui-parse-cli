@@ -1,0 +1,48 @@
+{
+  "name": "glade-ui-parse-cli",
+  "description": "Parse glade ui file and generate initial corresponding code",
+  "version": "0.1.0",
+  "homepage": "https://github.com/liudonghua123/glade-ui-parse-cli",
+  "author": {
+    "name": "Liu.D.H",
+    "url": "https://github.com/liudonghua123/glade-ui-parse-cli"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/liudonghua123/glade-ui-parse-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liudonghua123/glade-ui-parse-cli/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/liudonghua123/glade-ui-parse-cli/blob/master/LICENSE-MIT"
+    }
+  ],
+  "keywords": [
+    "cli",
+    "command line"
+  ],
+  "preferGlobal": true,
+  "bin": {
+    "glade-ui-parse-cli": "./bin/glade-ui-parse-cli"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.8"
+  },
+  "scripts": {
+    "test": "mocha -R test"
+  },
+  "dependencies": {
+    "minimist": "~0.0.8",
+    "mustache": "^2.3.0",
+    "verbalize": "~0.1.1",
+    "xmldom": "^0.1.27",
+    "xpath": "0.0.27"
+  },
+  "devDependencies": {
+    "verb": "~0.2.0"
+  }
+}

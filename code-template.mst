@@ -1,0 +1,53 @@
+#include <gtk/gtk.h>
+
+// create global widget variable for easy use in callback of event handler
+{{#topWidget}}
+// type {{class}}
+GtkWidget *{{id}};
+{{/topWidget}}
+{{#restWidgets}}
+// type {{class}}
+GtkWidget *{{id}};
+{{/restWidgets}}
+
+/**
+ * use GtkBuilder to parse, initialize widgets and connect signals
+ */
+void initializationWidgets() {
+    // create a GtkBuilder to parse xml format ui file
+    GtkBuilder *builder = gtk_builder_new();
+    // https://developer.gnome.org/gtk3/stable/GtkBuilder.html#gtk-builder-add-from-file
+    gtk_builder_add_from_file(builder, "{{gladeFile}}", NULL);
+    //window = GTK_WIDGET(gtk_builder_get_object(builder, "window"));
+    {{#topWidget}}
+    {{id}} = GTK_WIDGET(gtk_builder_get_object(builder, "{{id}}"));
+    {{/topWidget}}
+    //listboxContent = GTK_WIDGET(gtk_builder_get_object(builder, "listboxContent"));
+    {{#restWidgets}}
+    {{id}} = GTK_WIDGET(gtk_builder_get_object(builder, "{{id}}"));
+    {{/restWidgets}}
+    // connect all signals
+    // https://developer.gnome.org/gtk3/stable/GtkBuilder.html#gtk-builder-connect-signals
+    gtk_builder_connect_signals(builder, NULL);
+    // decrease the reference count like free/delete operation
+    // https://developer.gnome.org/gobject/stable/gobject-memory.html
+    g_object_unref(builder);
+    // https://developer.gnome.org/gtk3/stable/GtkWidget.html#gtk-widget-show
+    gtk_widget_show(window);
+}
+
+
+{{#signals}}
+G_MODULE_EXPORT void {{handler}}() {
+    g_print("running {{handler}}\n");
+}
+{{/signals}}
+
+int main(int argc, char *argv[]) {
+    // https://developer.gnome.org/gtk3/stable/gtk3-General.html#gtk-init
+    gtk_init(&argc, &argv);
+    initializationWidgets();
+    // https://developer.gnome.org/gtk3/stable/gtk3-General.html#gtk-main
+    gtk_main();
+    return 0;
+}

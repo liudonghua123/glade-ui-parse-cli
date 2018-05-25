@@ -1,0 +1,92 @@
+#!/usr/bin/env node
+
+const xpath = require('xpath');
+const dom = require('xmldom').DOMParser;
+const Mustache = require('mustache');
+const fs = require('fs');
+const path = require('path');
+const log = require('verbalize');
+const argv = require('minimist')(process.argv.slice(2));
+
+/**
+ * argument process
+ */
+
+// Verbalize `runner`
+log.runner = 'glade-ui-parse-cli';
+// Use `-s` or `--source` to specify the source glade file
+let source  = argv._[0] || argv.s || argv.source;
+// Use `-d` or `--destination` to specify the text to append
+let destination = argv._[1] || argv.d || argv.destination;
+// Use `-p` or `--print` to print the output instead of writting to destination file.
+const printFlag = argv.p || argv.print;
+let useDefaultSource = false;
+
+if (!source) {
+  log.warn('No source file specified, it will use the demo.glade instead, you can specify either as a first argument or with `-s`');
+  useDefaultSource = true;
+  source = path.resolve(__dirname, '../demo.glade');
+}
+if(!fs.existsSync(source)) {
+  log.error(`${source} do not exist!`);
+  process.exit(1);
+}
+if (!destination && !printFlag) {
+  log.warn('No destination file specified, it will use the same base name of the source file instead, you can specify either as a second argument or with `-d`');
+  destination = path.format({...path.parse(path.resolve(source)), ext: ".c", base: null});
+  // If using default source and destination, printFlag not specified, then the destination will be the current directory.
+  if(useDefaultSource) {
+    destination = path.format({...path.parse(path.resolve(source)), ext: ".c", base: null, dir: '.'});
+  }
+}
+if(fs.existsSync(destination)) {
+  log.warn(`${destination} exists, it will be overwrited!`);
+}
+if (printFlag) {
+  log.info('print option specified, it will just print not save to a file.')
+}
+
+/**
+ * application logical
+ */
+
+const xmlContents = fs.readFileSync(source).toString();
+const doc = new dom().parseFromString(xmlContents);
+const objectIdNodes = xpath.select("//object[@id]", doc);
+const signalNodes = xpath.select("//object[@id]/signal", doc);
+
+const nodeAttributes = nodes => nodes.map((node) => {
+    let attributes = []
+    for(let i = 0; i < node.attributes.length; i ++) {
+        attributes.push(node.attributes[i]);
+    }
+    let attributesObject = attributes.reduce((acc, item) => {
+        return {...acc, [item.nodeName]: item.nodeValue}
+    }, {})
+    return attributesObject;
+});
+
+
+const [topWidgetNodeAttributes, ...restWidgetNodesAttributes] = nodeAttributes(objectIdNodes);  
+const signalNodeAttributes = nodeAttributes(signalNodes);
+
+templateData = {
+    gladeFile: path.basename(source),
+    topWidget: topWidgetNodeAttributes,
+    restWidgets: restWidgetNodesAttributes,
+    signals: signalNodeAttributes,
+};
+const templateContents = fs.readFileSync(path.resolve(__dirname, "../code-template.mst")).toString();
+var templateOutput = Mustache.render(templateContents, templateData);
+
+if (printFlag) {
+  log.writeln();
+  log.writeln(log.grey(templateOutput));
+}
+else {
+  fs.writeFileSync(destination, templateOutput);
+  if(useDefaultSource) {
+    fs.copyFileSync(path.resolve(__dirname, '../demo.glade'), path.resolve('demo.glade'));
+  }
+  log.success('  ' + log.runner + ' [done]');
+}
